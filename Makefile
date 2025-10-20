@@ -7,7 +7,7 @@ KBUILD_BUILD_HOST?=usbarmory
 BUILD_USER?=usbarmory
 BUILD_HOST?=usbarmory
 
-LINUX_VER=6.12.40
+LINUX_VER=6.12.54
 LINUX_VER_MAJOR=${shell echo ${LINUX_VER} | cut -d '.' -f1,2}
 LOCALVERSION=-0
 UBOOT_VER=2025.04
@@ -110,9 +110,10 @@ usbarmory-${IMG_VERSION}.raw: $(DEBIAN_DEPS)
 	mkdir -p rootfs
 	sudo mount -o loop,offset=5242880 -t ext4 usbarmory-${IMG_VERSION}.raw rootfs/
 	sudo update-binfmts --enable qemu-arm
-	sudo qemu-debootstrap \
-		--include=ssh,sudo,ntpdate,fake-hwclock,openssl,vim,nano,cryptsetup,lvm2,locales,less,cpufrequtils,isc-dhcp-server,haveged,rng-tools-debian,whois,iw,wpasupplicant,dbus,apt-transport-https,dirmngr,ca-certificates,u-boot-tools,mmc-utils,gnupg,libpam-systemd,systemd-timesyncd \
-		--arch=armhf bookworm rootfs http://deb.debian.org/debian/
+	sudo debootstrap \
+		--include=ssh,sudo,ntpsec-ntpdate,fake-hwclock,openssl,vim,nano,cryptsetup,lvm2,locales,less,linux-cpupower,isc-dhcp-server,haveged,rng-tools-debian,whois,iw,wpasupplicant,dbus,apt-transport-https,dirmngr,ca-certificates,u-boot-tools,mmc-utils,gnupg,libpam-systemd,systemd-timesyncd \
+		--arch=armhf trixie rootfs http://deb.debian.org/debian/
+
 	sudo chroot rootfs mount -t proc none /proc
 	sudo install -m 755 -o root -g root conf/rc.local rootfs/etc/rc.local
 	sudo install -m 644 -o root -g root conf/sources.list rootfs/etc/apt/sources.list
@@ -171,7 +172,6 @@ usbarmory-${IMG_VERSION}.raw: $(DEBIAN_DEPS)
 	sudo chroot rootfs apt-get clean
 	sudo chroot rootfs fake-hwclock
 	sudo chroot rootfs umount /proc
-	-sudo rm rootfs/usr/bin/qemu-arm-static
 	sudo umount rootfs
 
 #### debian-xz ####
@@ -315,9 +315,9 @@ linux-image-${LINUX_VER_MAJOR}-usbarmory-${V}_${LINUX_VER}${LOCALVERSION}_armhf.
 tmp-rootfs:
 	mkdir -p tmp-rootfs
 	sudo update-binfmts --enable qemu-arm
-	sudo qemu-debootstrap \
+	sudo debootstrap \
 		--include=bc,bison,file,flex,gcc,libc6-dev,make,ssh,sudo,vim \
-		--arch=armhf bookworm tmp-rootfs http://deb.debian.org/debian/
+		--arch=armhf trixie tmp-rootfs http://deb.debian.org/debian/
 
 tmp-rootfs/linux-${LINUX_VER}/scripts/basic/fixdep: tmp-rootfs linux-${LINUX_VER}.tar.xz
 	sudo rm -rf tmp-rootfs/linux-${LINUX_VER} tmp-rootfs/linux-${LINUX_VER}.tar.xz
